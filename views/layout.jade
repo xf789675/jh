@@ -15,3 +15,11 @@ html
 			script(type='text/javascript', src='/javascripts/jquery-ui.min.js')
 	body
 		block content
+			#container
+			script(type='text/javascript').
+				function init() {
+					var map = new AMap.Map('container', {
+						resizeEnable: true,
+						center: [116.41, 39.95]
+					});
+				}

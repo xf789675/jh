@@ -1,2 +1,46 @@
 extends layout
-block content
+append styles
+  link(rel='stylesheet', href='/stylesheets/jsgrid.min.css')
+  link(rel='stylesheet', href='/stylesheets/jsgrid-theme.min.css')
+append scripts
+  script(type='text/javascript', src='/javascripts/jsgrid.min.js')
+  script(type='text/javascript', src='/javascripts/jsgrid-zh-cn.js')
+append content
+  #searchPanel
+    input(id='searchInput', onkeyup='doSearch()')
+    #jsGrid
+  script(type='text/javascript').
+    const vehicleData = [];
+    function doSearch() {
+      var keyword = $('#searchInput').val();
+      console.log(keyword);
+    }
+    $(function() {
+      $.get('http://localhost:5000/listVehicle',
+      function(data) {
+
+      });
+    });
+
+    function buildGrid() {
+      $("#jsGrid").jsGrid({
+        width: "100%",
+        height: "400px",
+
+        inserting: false,
+        editing: false,
+        sorting: false,
+        paging: true,
+
+        data: vehicleData,
+
+        fields: [
+          {name: "Name", type: "text", width: 150, validate: "required"},
+          {name: "Age", type: "number", width: 50},
+          {name: "Address", type: "text", width: 200},
+          {name: "Country", type: "select", items: countries, valueField: "Id", textField: "Name"},
+          {name: "Married", type: "checkbox", title: "Is Married", sorting: false},
+          {type: "control"}
+        ]
+      });
+    }
