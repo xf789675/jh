@@ -1,0 +1,62 @@
+extends layout
+append styles
+	link(rel='stylesheet', href='/stylesheets/index.css')
+append scripts
+	script(type='text/javascript', src='/javascripts/datepicker-zh-CN.js')
+block content
+	#container
+	#searchPanel
+		//label 选择日期：
+		input(type='text', name='from', id='from')
+		&nbsp;
+		input(type='text', name='to', id='to')
+		&nbsp;
+		button(type='button', onClick='doSearch();') 查询
+	script(type='text/javascript').
+		function init(){
+			var map = new AMap.Map('container', {
+				resizeEnable: true,
+				center: [116.41, 39.95]
+			});
+		}
+
+		function doSearch() {
+			var begin = $('#from').val();
+			var end = $('#to').val();
+			$.post('http://localhost:5000/search', {
+					begin: begin,
+					end: end,
+				},
+				function(data, status) {
+				}
+			);
+		}
+
+		$(function() {
+			var dateFormat = "yy-mm-dd",
+			from = $("#from").datepicker({
+				//defaultDate: "+1w",
+				changeMonth: true,
+				numberOfMonths: 2
+			}).on("change", function() {
+				to.datepicker("option", "minDate", getDate(this));
+			}),
+			to = $("#to").datepicker({
+				//defaultDate: "+1w",
+				changeMonth: true,
+				numberOfMonths: 2
+			}).on("change", function() {
+				from.datepicker("option", "maxDate", getDate(this));
+			});
+	 
+			function getDate( element ) {
+				var date;
+				try {
+					date = $.datepicker.parseDate( dateFormat, element.value );
+				} catch( error ) {
+					date = null;
+				}
+	 
+				return date;
+			}
+		} );
