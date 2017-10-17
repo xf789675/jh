@@ -1,0 +1,17 @@
+doctype html
+html
+	head
+		title= title
+		meta(charset='utf-8')
+		meta(http-equiv='X-UA-Compatible', content='IE=edge')
+		meta(name='viewport', content='initial-scale=1.0, user-scalable=no, width=device-width')
+		block styles
+			link(rel='stylesheet', href='/stylesheets/style.css')
+			link(rel='stylesheet', href='/stylesheets/jquery-ui.min.css')
+			link(rel='stylesheet', href='/stylesheets/jquery-ui.theme.min.css')
+		block scripts
+			script(src='http://webapi.amap.com/maps?v=1.4.0&amp;key=ad8bf3f292d4e426cb6deb65783f1e10&callback=init')
+			script(type='text/javascript', src='/javascripts/jquery.js')
+			script(type='text/javascript', src='/javascripts/jquery-ui.min.js')
+	body
+		block content
