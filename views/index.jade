@@ -5,42 +5,71 @@ append styles
 append scripts
   script(type='text/javascript', src='/javascripts/jsgrid.min.js')
   script(type='text/javascript', src='/javascripts/jsgrid-zh-cn.js')
+  script(type='text/javascript', src='/javascripts/underscore-min.js')
 append content
   #searchPanel
-    input(id='searchInput', onkeyup='doSearch()')
+    input(id='searchInput', onkeyup='doSearch()', class='filterInput')
+    hr
     #jsGrid
   script(type='text/javascript').
-    const vehicleData = [];
-    function doSearch() {
-      var keyword = $('#searchInput').val();
-      console.log(keyword);
-    }
-    $(function() {
-      $.get('http://localhost:5000/listVehicle',
-      function(data) {
-
+    let originalData = [];
+    let vehicleData = [];
+    var map;
+    function init() {
+      map = new AMap.Map('container', {
+        resizeEnable: true,
       });
-    });
+      map.on('complete', function() {
+        $.get('/listVehicle', function(results) {
+          vehicleData = results.data;
+          originalData = results.data;
+          drawLocation();
+        });
+      });
+    }
+    function doSearch() {
+      var keyword = $('#searchInput').val().toUpperCase();
+      console.log(keyword);
+      vehicleData = _.filter(originalData, function(data){
+        var vehicle = data.vehicle.toUpperCase();
+        return vehicle.indexOf(keyword) >= 0;
+      });
+      drawLocation();
+    }
 
-    function buildGrid() {
+    function drawLocation() {
       $("#jsGrid").jsGrid({
-        width: "100%",
-        height: "400px",
 
         inserting: false,
         editing: false,
         sorting: false,
         paging: true,
-
         data: vehicleData,
-
+        rowClick: function(args) {
+          var data = args.item;
+          console.log(data);
+          var position = new AMap.LngLat(data.lng, data.lat);
+          map.setCenter(position);
+          openInfo(data);
+        },
         fields: [
-          {name: "Name", type: "text", width: 150, validate: "required"},
-          {name: "Age", type: "number", width: 50},
-          {name: "Address", type: "text", width: 200},
-          {name: "Country", type: "select", items: countries, valueField: "Id", textField: "Name"},
-          {name: "Married", type: "checkbox", title: "Is Married", sorting: false},
-          {type: "control"}
+          {title: '车牌号', name: "vehicle", type: "text", width: 200, validate: "required", css: 'center'}
         ]
       });
+      jsGrid.locale('zh-cn');
+      for(var i = 0; i < vehicleData.length; i++) {
+        var marker = new AMap.Marker({
+          icon : new AMap.Icon({
+            image : '/images/van.png',
+            size : new AMap.Size(64, 64),
+          }),
+          position : new AMap.LngLat(vehicleData[i].lng, vehicleData[i].lat),
+          offset: new AMap.Pixel(-32, -32),
+          extData: vehicleData[i],
+          map: map
+        }).on('click', function() {
+          var data = this.getExtData();
+          openInfo(data);
+        });
+      }
     }

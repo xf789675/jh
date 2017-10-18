@@ -5,6 +5,12 @@ body {
 a {
   color: #00b7ff;
 }
+.center {
+  text-align: center;
+}
+.filterInput {
+  width: 196px;
+}
 #container {
   position: absolute;
   top: 0;
