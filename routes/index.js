@@ -14,39 +14,125 @@ var queryTable = 0;
 router.get('/', function(req, res, next) {
   res.render('index', { title: '车辆管理' });
 });
+//
+// router.get('/listVehicle', function(req, res, next) {
+// 	var data = [];
+// 	pool.getConnection(function(err, connection) {
+// 		connection.query('SELECT s.vehicle from status s', function (error, vehicles, fields) {
+// 			connection.release();
+// 			if (error) throw error;
+// 			var vehicleList = vehicles;
+//
+//
+// 			for(var i = 0; i < vehicleList.length; i++) {
+// 				var vehicle = vehicleList[i]['vehicle'];
+// 				console.log(vehicle);
+// 				pool.getConnection(function(err, connection) {
+// 					connection.query('SELECT h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history1 h ' +
+// 			    	'where h.gpstime  < curtime() and h.vehicle = ? limit 1 ', [vehicle], function (error, results, fields) {
+// 			      connection.release();
+// 			      if (error) throw error;
+//
+// 			      console.log(results);
+// 			      var item = {};
+// 			      item.lat = results[0].lat;
+// 			      item.lng = results[0].lng;
+// 			      item.veo = results[0].veo;
+// 			      item.gpstime = results[0].gpstime;
+// 			      data.push(item);
+//
+// 			      if(i == (vehicleList.length - 1)) {
+//               res.json({
+//                 status: 200,
+//                 data: data,
+//               });
+// 						}
+// 			    });
+// 				});
+// 			}
+// 		});
+//
+//   });
+// });
 
 router.get('/listVehicle', function(req, res, next) {
-	var vehicleList;
-	pool.getConnection(function(err, connection) {
-		connection.query('SELECT s.vehicle from status s', function (error, vehicles, fields) {
-			connection.release();
-			if (error) throw error;
-			vehicleList = vehicles;
+  var data = [];
+  pool.getConnection(function(err, connection) {
+    var query = connection.query('SELECT s.vehicle from status s');
+    query
+      .on('error', function(err) {
+        // Handle error, an 'end' event will be emitted after this as well
+        throw err;
+      })
+      .on('result', function(row) {
+        // Pausing the connnection is useful if your processing involves I/O
+        connection.pause();
+        console.log(row);
+        var vehicle = row.vehicle;
+        pool.getConnection(function(err, conn) {
+          conn.query('SELECT h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history1 h ' +
+            'where h.gpstime  < curtime() and h.vehicle = ? order by h.gpstime desc limit 1 ', [vehicle], function (error, results, fields) {
+            conn.release();
+            if (error) throw error;
 
-			for(var i = 0; i < vehicleList.length; i++) {
-				pool.getConnection(function(err, connection) {
-					connection.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history1 h ' +
-			    	'where h1.gpstime  < curtime() and h.vehicle = ? limit 1 ', [vehicleList[i].vehicle], function (error, results, fields) {
-			      connection.release();
-			      if (error) throw error;
-			      
-			      console.log(results);
-			      vehicleList[i].lat = results[0].lat;
-			      vehicleList[i].lng = results[0].lng;
-			      vehicleList[i].gpstime = results[0].gpstime;
-			      vehicleList[i].veo = results[0].veo;
-			    });
-				});
-			}
-			res.json({
-				status: 200,
-				data: vehicleList,
-			})    
-		});
-		
+            console.log(results);
+            var item = {};
+            item.lat = results[0].lat;
+            item.lng = results[0].lng;
+            item.veo = results[0].veo;
+            item.gpstime = results[0].gpstime;
+            item.vehicle = vehicle;
+            data.push(item);
+
+            connection.resume();
+          });
+        });
+      })
+      .on('end', function() {
+        // all rows have been received
+        console.log('query end');
+        connection.release();
+        res.json({
+          status: 200,
+          data: data,
+        });
+      });
+    // , function (error, vehicles, fields) {
+    //   connection.release();
+    //   if (error) throw error;
+    //   var vehicleList = vehicles;
+    //
+    //
+    //   for(var i = 0; i < vehicleList.length; i++) {
+    //     var vehicle = vehicleList[i]['vehicle'];
+    //     console.log(vehicle);
+    //     pool.getConnection(function(err, connection) {
+    //       connection.query('SELECT h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history1 h ' +
+    //         'where h.gpstime  < curtime() and h.vehicle = ? limit 1 ', [vehicle], function (error, results, fields) {
+    //         connection.release();
+    //         if (error) throw error;
+    //
+    //         console.log(results);
+    //         var item = {};
+    //         item.lat = results[0].lat;
+    //         item.lng = results[0].lng;
+    //         item.veo = results[0].veo;
+    //         item.gpstime = results[0].gpstime;
+    //         data.push(item);
+    //
+    //         if(i == (vehicleList.length - 1)) {
+    //           res.json({
+    //             status: 200,
+    //             data: data,
+    //           });
+    //         }
+    //       });
+    //     });
+    //   }
+    // });
+
   });
 });
-
 // router.get('/listVehicle', function(req, res, next) {
 // 	pool.getConnection(function(err, connection) {
 
