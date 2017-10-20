@@ -20,9 +20,10 @@ html
 				function openInfo(data) {
 					//构建信息窗体中显示的内容
 					var info = [];
-					info.push("车牌号 : " + data.vehicle);
+					info.push("车牌号：" + data.vehicle);
 					info.push("位置：" + data.lng + ", " + data.lat);
-					info.push("速度 : " + data.veo);
+					info.push("速度：" + data.veo);
+					info.push("时间：" + data.gpstime);
 					info.push("<a href=\"/track/" + data.vehicle + "\" target=\"_blank\">查看历史轨迹</a>");
 					infoWindow = new AMap.InfoWindow({
 							content: info.join("<br/>")  //使用默认信息窗体框样式，显示信息内容
