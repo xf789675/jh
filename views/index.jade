@@ -14,19 +14,15 @@ append content
   script(type='text/javascript').
     let originalData = [];
     let vehicleData = [];
-    var map;
-    function init() {
-      map = new AMap.Map('container', {
-        resizeEnable: true,
+
+    map.on('complete', function() {
+      $.get('/listVehicle', function(results) {
+        vehicleData = results.data;
+        originalData = results.data;
+        drawLocation();
       });
-      map.on('complete', function() {
-        $.get('/listVehicle', function(results) {
-          vehicleData = results.data;
-          originalData = results.data;
-          drawLocation();
-        });
-      });
-    }
+    });
+
     function doSearch() {
       var keyword = $('#searchInput').val().toUpperCase();
       console.log(keyword);

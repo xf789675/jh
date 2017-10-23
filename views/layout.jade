@@ -1,37 +1,40 @@
 doctype html
 html
-	head
-		title= title
-		meta(charset='utf-8')
-		meta(http-equiv='X-UA-Compatible', content='IE=edge')
-		meta(name='viewport', content='initial-scale=1.0, user-scalable=no, width=device-width')
-		block styles
-			link(rel='stylesheet', href='/stylesheets/style.css')
-			link(rel='stylesheet', href='/stylesheets/jquery-ui.min.css')
-			link(rel='stylesheet', href='/stylesheets/jquery-ui.theme.min.css')
-		block scripts
-			script(src='http://webapi.amap.com/maps?v=1.4.0&amp;key=ad8bf3f292d4e426cb6deb65783f1e10&callback=init')
-			script(type='text/javascript', src='/javascripts/jquery.js')
-			script(type='text/javascript', src='/javascripts/jquery-ui.min.js')
-	body
-		block content
-			#container
-			script(type='text/javascript').
-				function openInfo(data) {
-					//构建信息窗体中显示的内容
-					var info = [];
-					info.push("车牌号：" + data.vehicle);
-					info.push("位置：" + data.lng + ", " + data.lat);
-					info.push("速度：" + data.veo);
-					info.push("时间：" + data.gpstime);
-					info.push("<a href=\"/track/" + data.vehicle + "\" target=\"_blank\">查看历史轨迹</a>");
-					infoWindow = new AMap.InfoWindow({
-							content: info.join("<br/>")  //使用默认信息窗体框样式，显示信息内容
-					});
-					infoWindow.open(map, new AMap.LngLat(data.lng, data.lat));
-				}
+  head
+    title= title
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='initial-scale=1.0, user-scalable=no, width=device-width')
+    block styles
+      link(rel='stylesheet', href='/stylesheets/style.css')
+      link(rel='stylesheet', href='/stylesheets/jquery-ui.min.css')
+      link(rel='stylesheet', href='/stylesheets/jquery-ui.theme.min.css')
+    block scripts
+      script(type='text/javascript', src='http://webapi.amap.com/maps?v=1.4.0&key=ad8bf3f292d4e426cb6deb65783f1e10')
+      script(type='text/javascript', src='/javascripts/jquery.js')
+      script(type='text/javascript', src='/javascripts/jquery-ui.min.js')
+  body
+    block content
+      #container
+      script(type='text/javascript').
+        var map = new AMap.Map('container', {
+          resizeEnable: true,
+        });
+        function openInfo(data) {
+          //构建信息窗体中显示的内容
+          var info = [];
+          info.push("车牌号：" + data.vehicle);
+          info.push("位置：" + data.lng + ", " + data.lat);
+          info.push("速度：" + data.veo);
+          info.push("时间：" + data.gpstime);
+          info.push("<a href=\"/track/" + data.vehicle + "\" target=\"_blank\">查看历史轨迹</a>");
+          infoWindow = new AMap.InfoWindow({
+            content: info.join("<br/>")  //使用默认信息窗体框样式，显示信息内容
+          });
+          infoWindow.open(map, new AMap.LngLat(data.lng, data.lat));
+        }
 
-				//关闭信息窗体
-				function closeInfoWindow() {
-						map.clearInfoWindow();
-				}
+        //关闭信息窗体
+        function closeInfoWindow() {
+          map.clearInfoWindow();
+        }
