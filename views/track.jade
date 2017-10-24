@@ -67,10 +67,10 @@ block append content
               //返回鼠标悬停时显示的信息
               if (pointIndex >= 0) {
                 //鼠标悬停在某个轨迹节点上
-                return pathData[pointIndex].vehicle + '，坐标:' + pathData[pointIndex].lng + ',' + pathData[pointIndex].lat + '，速度:' + pathData[pointIndex].veo + '，时间:' + date + ' ' + pathData[pointIndex].gpstime;
+                return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + date + ' ' + pathData.path[pointIndex].gpstime;
               }
               //鼠标悬停在节点之间的连线上
-              return pathData[0].vehicle;
+              return pathData.path[0].vehicle;
             },
             renderOptions: {
               //轨迹线的样式
@@ -87,7 +87,9 @@ block append content
     }
 
     function doDraw(data) {
-      pathSimplifierIns.setData(data);
+      pathSimplifierIns.setData([{
+        path: data
+      }]);
       pathSimplifierIns.render();
       //创建一个巡航器
       AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
