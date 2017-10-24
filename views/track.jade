@@ -20,77 +20,79 @@ block append content
     });
 
     function doSearch() {
+      if (pathSimplifierIns) {
+        pathSimplifierIns.setData();
+      }
       var searchDate = $('#from').val();
       if (searchDate != '') {
-        if (!moment(searchDate).isAfter(date, 'day')) {
-          date = searchDate;
-        } else {
+        if (moment(searchDate).isAfter(date, 'day')) {
           alert('查询日期最晚为前一天！');
           $('#from').focus();
+          return;
         }
       }
       var href = window.location.href;
       var hrefArray = href.split('/');
       var vehicle = hrefArray[hrefArray.length - 1];
 
-      $.get('/showHistory/' + vehicle, function (results) {
-        drawTrack(results.data);
+      $.ajax({
+        url: '/showHistory/' + vehicle, 
+        success: function (results) {
+          drawTrack(results.data);
+        },
+        cache: false,
       });
     }
 
     function drawTrack(data) {
-      if (pathSimplifierIns) {
-        pathSimplifierIns.clearPathNavigators();
-        doDraw(data);
-      } else {
-        //加载PathSimplifier，loadUI的路径参数为模块名中 'ui/' 之后的部分
-        AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
+      
+      //加载PathSimplifier，loadUI的路径参数为模块名中 'ui/' 之后的部分
+      AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
 
-          if (!PathSimplifier.supportCanvas) {
-            alert('当前环境不支持 Canvas！');
-            return;
-          }
-          //启动页面
-          //创建组件实例
-          pathSimplifierIns = new PathSimplifier({
-            zIndex: 100,
-            map: map, //所属的地图实例
-            getPath: function (pathData, pathIndex) {
-              //返回轨迹数据中的节点坐标信息，[AMap.LngLat, AMap.LngLat...] 或者 [[lng|number,lat|number],...]
-              var path = [];
-              for (var i = 0; i < data.length; i++) {
-                path.push(new AMap.LngLat(data[i].lng, data[i].lat));
-              }
-              return path;
-            },
-            getHoverTitle: function (pathData, pathIndex, pointIndex) {
-              //返回鼠标悬停时显示的信息
-              if (pointIndex >= 0) {
-                //鼠标悬停在某个轨迹节点上
-                return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + date + ' ' + pathData.path[pointIndex].gpstime;
-              }
-              //鼠标悬停在节点之间的连线上
-              return pathData.path[0].vehicle;
-            },
-            renderOptions: {
-              //轨迹线的样式
-              pathLineStyle: {
-                strokeStyle: 'red',
-                lineWidth: 6,
-                dirArrowStyle: true
-              }
+        if (!PathSimplifier.supportCanvas) {
+          alert('当前环境不支持 Canvas！');
+          return;
+        }
+        //启动页面
+        //创建组件实例
+        pathSimplifierIns = new PathSimplifier({
+          zIndex: 100,
+          map: map, //所属的地图实例
+          getPath: function (pathData, pathIndex) {
+            //返回轨迹数据中的节点坐标信息，[AMap.LngLat, AMap.LngLat...] 或者 [[lng|number,lat|number],...]
+            var path = [];
+            for (var i = 0; i < data.length; i++) {
+              path.push(new AMap.LngLat(data[i].lng, data[i].lat));
             }
-          });
-          doDraw(data);
+            return path;
+          },
+          getHoverTitle: function (pathData, pathIndex, pointIndex) {
+            //返回鼠标悬停时显示的信息
+            if (pointIndex >= 0) {
+              //鼠标悬停在某个轨迹节点上
+              return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + date + ' ' + pathData.path[pointIndex].gpstime;
+            }
+            //鼠标悬停在节点之间的连线上
+            return pathData.path[0].vehicle;
+          },
+          renderOptions: {
+            //轨迹线的样式
+            pathLineStyle: {
+              strokeStyle: 'red',
+              lineWidth: 6,
+              dirArrowStyle: true
+            }
+          }
         });
-      }
+        doDraw(data);
+      });
     }
 
     function doDraw(data) {
       pathSimplifierIns.setData([{
+        name: 'path0',
         path: data
       }]);
-      pathSimplifierIns.render();
       //创建一个巡航器
       AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
         var navg0 = pathSimplifierIns.createPathNavigator(0, {	//关联第1条轨迹
@@ -117,13 +119,13 @@ block append content
         });
 
       function getDate(element) {
-        var date;
+        var selectDate;
         try {
-          date = $.datepicker.parseDate(dateFormat, element.value);
+          selectDate = $.datepicker.parseDate(dateFormat, element.value);
         } catch (error) {
-          date = null;
+          selectDate = null;
         }
 
-        return date;
+        return selectDate;
       }
     });
