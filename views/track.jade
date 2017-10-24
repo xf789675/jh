@@ -12,24 +12,34 @@ block append content
     input(type='text', name='from', id='from')
     &nbsp;
     button(type='button', onClick='doSearch();')查询
+    button(type='button', onClick='pause();')暂停
+    button(type='button', onClick='resume();')恢复
   script(type='text/javascript').
     var pathSimplifierIns;
-    var date = moment().subtract(1, 'day').format('YYYY-MM-DD');
+    var navg0;
+    var yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+    var date;
     map.on('complete', function () {
       doSearch();
     });
 
     function doSearch() {
-      if (pathSimplifierIns) {
-        pathSimplifierIns.setData();
-      }
-      var searchDate = $('#from').val();
-      if (searchDate != '') {
-        if (moment(searchDate).isAfter(date, 'day')) {
+      var inputDate = $('#from').val();
+      if (inputDate != '') {
+        if (moment(inputDate).isAfter(yesterday, 'day')) {
           alert('查询日期最晚为前一天！');
           $('#from').focus();
           return;
+        } else {
+          date = inputDate;
         }
+      } else {
+        date = yesterday;
+      }
+      
+      if (pathSimplifierIns) {
+        pathSimplifierIns.setData();
+        map.clearMap();
       }
       var href = window.location.href;
       var hrefArray = href.split('/');
@@ -95,7 +105,7 @@ block append content
       }]);
       //创建一个巡航器
       AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
-        var navg0 = pathSimplifierIns.createPathNavigator(0, {	//关联第1条轨迹
+        navg0 = pathSimplifierIns.createPathNavigator(0, {	//关联第1条轨迹
           speed: 10000,
           pathNavigatorStyle: {
             width: 16,
@@ -107,9 +117,27 @@ block append content
         });
 
         navg0.start();
+        var marker = new AMap.Marker({
+          offset: new AMap.Pixel(20, -20),
+          map: map
+        });;
+        navg0.on('move', function() {
+          var cursor = navg0.getCursor();
+          var idx = cursor.idx;
+          var data = pathSimplifierIns.getPathData(0).path[idx];
+          marker.setContent('<div class=\'marker\'>时间：' + date + ' ' + data.gpstime + '<br />速度：' + data.veo + '<br />位置：' + data.lng + ',' + data.lat + '</div>');
+          marker.setPosition(navg0.getPosition());
+        })
       });
     }
 
+    function pause() {
+      navg0.pause();
+    }
+
+    function resume() {
+      navg0.resume();
+    }
 
     $(function () {
       var dateFormat = "yy-mm-dd",
