@@ -13,6 +13,7 @@ html
       script(type='text/javascript', src='http://webapi.amap.com/maps?v=1.4.0&key=ad8bf3f292d4e426cb6deb65783f1e10')
       script(type='text/javascript', src='/javascripts/jquery.js')
       script(type='text/javascript', src='/javascripts/jquery-ui.min.js')
+      script(type='text/javascript', src='/javascripts/moment.js')
   body
     block content
       #container
@@ -26,7 +27,7 @@ html
           info.push("车牌号：" + data.vehicle);
           info.push("位置：" + data.lng + ", " + data.lat);
           info.push("速度：" + data.veo);
-          info.push("时间：" + data.gpstime);
+          info.push("时间：" + moment().format('YYYY-MM-DD') + ' ' + data.gpstime);
           info.push("<a href=\"/track/" + data.vehicle + "\" target=\"_blank\">查看历史轨迹</a>");
           infoWindow = new AMap.InfoWindow({
             content: info.join("<br/>")  //使用默认信息窗体框样式，显示信息内容

@@ -35,17 +35,18 @@ router.get('/listVehicle', function(req, res, next) {
             'where h.gpstime  < curtime() and h.vehicle = ? order by h.gpstime desc limit 1 ', [vehicle], function (error, results, fields) {
             conn.release();
             if (error) throw error;
-
-            // console.log(results);
-            var item = {};
-            item.lat = results[0].lat;
-            item.lng = results[0].lng;
-            item.veo = results[0].veo;
-            item.gpstime = results[0].gpstime;
-            item.vehicle = vehicle;
-            data.push(item);
-
+            if(results.length > 0) {
+              // console.log(results);
+              var item = {};
+              item.lat = results[0].lat;
+              item.lng = results[0].lng;
+              item.veo = results[0].veo;
+              item.gpstime = results[0].gpstime;
+              item.vehicle = vehicle;
+              data.push(item);
+            }
             connection.resume();
+
           });
         });
       })
