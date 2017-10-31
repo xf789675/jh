@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) {
 router.get('/listVehicle', function(req, res, next) {
   var data = [];
   pool.getConnection(function(err, connection) {
-    var query = connection.query('SELECT s.vehicle from status s order by s.vehicle');
+    var query = connection.query('SELECT s.vehicle, mod(datediff(now(), s.start), s.cycle) as cycleno from newstatus s order by s.vehicle');
     query
       .on('error', function(err) {
         // Handle error, an 'end' event will be emitted after this as well
@@ -30,9 +30,10 @@ router.get('/listVehicle', function(req, res, next) {
         connection.pause();
         // console.log(row);
         var vehicle = row.vehicle;
+        var cycleno = row.cycleno;
         pool.getConnection(function(err, conn) {
-          conn.query('SELECT h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history1 h ' +
-            'where h.gpstime  < curtime() and h.vehicle = ? order by h.gpstime desc limit 1 ', [vehicle], function (error, results, fields) {
+          conn.query('SELECT h.vehicle, h.lat, h.lng, h.gpstime, h.veo from newhis h ' +
+            'where h.gpstime  < curtime() and h.vehicle = ? and h.cycleno = ? order by h.gpstime desc limit 1 ', [vehicle, cycleno], function (error, results, fields) {
             conn.release();
             if (error) throw error;
             if(results.length > 0) {

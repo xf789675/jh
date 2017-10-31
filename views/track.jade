@@ -1,158 +1,159 @@
 extends layout
 append styles
-  link(rel='stylesheet', href='/stylesheets/index.css')
+	link(rel='stylesheet', href='/stylesheets/daterangepicker.css')
 append scripts
-  script(type='text/javascript', src='/javascripts/datepicker-zh-CN.js')
-  script(src='//webapi.amap.com/ui/1.0/main.js?v=1.0.11')
+	script(type='text/javascript', src='/javascripts/jquery.daterangepicker.js')
+	script(src='//webapi.amap.com/ui/1.0/main.js?v=1.0.11')
 
 block append content
-  #searchPanel
-    //label 选择日期：
-    input(type='text', name='from', id='from')
-    &nbsp;
-    button(type='button', onClick='doSearch();')查询
-    button(type='button', onClick='pause();')暂停
-    button(type='button', onClick='resume();')恢复
-  script(type='text/javascript').
-    var pathSimplifierIns;
-    var navg0;
-    var yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
-    var date;
-    map.on('complete', function () {
-      doSearch();
-    });
+	#searchPanel
+		//label 选择日期：
+		input(type='text', name='from', id='from', size='25')
+		&nbsp;
+		button(type='button', onClick='doSearch();')查询
+		button(type='button', onClick='pause();')暂停
+		button(type='button', onClick='resume();')恢复
+	script(type='text/javascript').
+		var pathSimplifierIns;
+		var navg0;
+		var yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
+		var date;
+		map.on('complete', function () {
+			//doSearch();
+		});
 
-    function doSearch() {
-      var inputDate = $('#from').val();
-      if (inputDate != '') {
-        if (moment(inputDate).isAfter(yesterday, 'day')) {
-          alert('查询日期最晚为前一天！');
-          $('#from').focus();
-          return;
-        } else {
-          date = inputDate;
-        }
-      } else {
-        date = yesterday;
-      }
-      
-      if (pathSimplifierIns) {
-        pathSimplifierIns.setData();
-        map.clearMap();
-      }
-      var href = window.location.href;
-      var hrefArray = href.split('/');
-      var vehicle = hrefArray[hrefArray.length - 1];
+		function doSearch() {
+			var inputDate = $('#from').val();
+			if (inputDate != '') {
+				if (moment(inputDate).isAfter(yesterday, 'day')) {
+					alert('查询日期最晚为前一天！');
+					$('#from').focus();
+					return;
+				} else {
+					date = inputDate;
+				}
+			} else {
+				date = yesterday;
+			}
+			
+			if (pathSimplifierIns) {
+				pathSimplifierIns.setData();
+				map.clearMap();
+			}
+			var href = window.location.href;
+			var hrefArray = href.split('/');
+			var vehicle = hrefArray[hrefArray.length - 1];
 
-      $.ajax({
-        url: '/showHistory/' + vehicle, 
-        success: function (results) {
-          drawTrack(results.data);
-        },
-        cache: false,
-      });
-    }
+			$.ajax({
+				url: '/showHistory/' + vehicle, 
+				success: function (results) {
+					drawTrack(results.data);
+				},
+				cache: false,
+			});
+		}
 
-    function drawTrack(data) {
-      
-      //加载PathSimplifier，loadUI的路径参数为模块名中 'ui/' 之后的部分
-      AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
+		function drawTrack(data) {
+			
+			//加载PathSimplifier，loadUI的路径参数为模块名中 'ui/' 之后的部分
+			AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
 
-        if (!PathSimplifier.supportCanvas) {
-          alert('当前环境不支持 Canvas！');
-          return;
-        }
-        //启动页面
-        //创建组件实例
-        pathSimplifierIns = new PathSimplifier({
-          zIndex: 100,
-          map: map, //所属的地图实例
-          getPath: function (pathData, pathIndex) {
-            //返回轨迹数据中的节点坐标信息，[AMap.LngLat, AMap.LngLat...] 或者 [[lng|number,lat|number],...]
-            var path = [];
-            for (var i = 0; i < data.length; i++) {
-              path.push(new AMap.LngLat(data[i].lng, data[i].lat));
-            }
-            return path;
-          },
-          getHoverTitle: function (pathData, pathIndex, pointIndex) {
-            //返回鼠标悬停时显示的信息
-            if (pointIndex >= 0) {
-              //鼠标悬停在某个轨迹节点上
-              return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + date + ' ' + pathData.path[pointIndex].gpstime;
-            }
-            //鼠标悬停在节点之间的连线上
-            return pathData.path[0].vehicle;
-          },
-          renderOptions: {
-            //轨迹线的样式
-            pathLineStyle: {
-              strokeStyle: 'red',
-              lineWidth: 6,
-              dirArrowStyle: true
-            }
-          }
-        });
-        doDraw(data);
-      });
-    }
+				if (!PathSimplifier.supportCanvas) {
+					alert('当前环境不支持 Canvas！');
+					return;
+				}
+				//启动页面
+				//创建组件实例
+				pathSimplifierIns = new PathSimplifier({
+					zIndex: 100,
+					map: map, //所属的地图实例
+					getPath: function (pathData, pathIndex) {
+						//返回轨迹数据中的节点坐标信息，[AMap.LngLat, AMap.LngLat...] 或者 [[lng|number,lat|number],...]
+						var path = [];
+						for (var i = 0; i < data.length; i++) {
+							path.push(new AMap.LngLat(data[i].lng, data[i].lat));
+						}
+						return path;
+					},
+					getHoverTitle: function (pathData, pathIndex, pointIndex) {
+						//返回鼠标悬停时显示的信息
+						if (pointIndex >= 0) {
+							//鼠标悬停在某个轨迹节点上
+							return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + date + ' ' + pathData.path[pointIndex].gpstime;
+						}
+						//鼠标悬停在节点之间的连线上
+						return pathData.path[0].vehicle;
+					},
+					renderOptions: {
+						//轨迹线的样式
+						pathLineStyle: {
+							strokeStyle: 'red',
+							lineWidth: 6,
+							dirArrowStyle: true
+						}
+					}
+				});
+				doDraw(data);
+			});
+		}
 
-    function doDraw(data) {
-      pathSimplifierIns.setData([{
-        name: 'path0',
-        path: data
-      }]);
-      //创建一个巡航器
-      AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
-        navg0 = pathSimplifierIns.createPathNavigator(0, {	//关联第1条轨迹
-          speed: 10000,
-          pathNavigatorStyle: {
-            width: 16,
-            height: 32,
-            content: PathSimplifier.Render.Canvas.getImageContent('/images/car.png', onload, onerror),
-            strokeStyle: null,
-            fillStyle: null
-          }
-        });
+		function doDraw(data) {
+			pathSimplifierIns.setData([{
+				name: 'path0',
+				path: data
+			}]);
+			//创建一个巡航器
+			AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
+				navg0 = pathSimplifierIns.createPathNavigator(0, {	//关联第1条轨迹
+					speed: 10000,
+					pathNavigatorStyle: {
+						width: 16,
+						height: 32,
+						content: PathSimplifier.Render.Canvas.getImageContent('/images/car.png', onload, onerror),
+						strokeStyle: null,
+						fillStyle: null
+					}
+				});
 
-        navg0.start();
-        var marker = new AMap.Marker({
-          offset: new AMap.Pixel(20, -20),
-          map: map
-        });;
-        navg0.on('move', function() {
-          var cursor = navg0.getCursor();
-          var idx = cursor.idx;
-          var data = pathSimplifierIns.getPathData(0).path[idx];
-          marker.setContent('<div class=\'marker\'>时间：' + date + ' ' + data.gpstime + '<br />速度：' + data.veo + '<br />位置：' + data.lng + ',' + data.lat + '</div>');
-          marker.setPosition(navg0.getPosition());
-        })
-      });
-    }
+				navg0.start();
+				var marker = new AMap.Marker({
+					offset: new AMap.Pixel(20, -20),
+					map: map
+				});;
+				navg0.on('move', function() {
+					var cursor = navg0.getCursor();
+					var idx = cursor.idx;
+					var data = pathSimplifierIns.getPathData(0).path[idx];
+					marker.setContent('<div class=\'marker\'>时间：' + date + ' ' + data.gpstime + '<br />速度：' + data.veo + '<br />位置：' + data.lng + ',' + data.lat + '</div>');
+					marker.setPosition(navg0.getPosition());
+				})
+			});
+		}
 
-    function pause() {
-      navg0.pause();
-    }
+		function pause() {
+			navg0.pause();
+		}
 
-    function resume() {
-      navg0.resume();
-    }
+		function resume() {
+			navg0.resume();
+		}
 
-    $(function () {
-      var dateFormat = "yy-mm-dd",
-        from = $("#from").datepicker({
-          //defaultDate: "+1w",
-          changeMonth: true
-        });
+		$(function () {
+			var dateFormat = "yy-mm-dd";
+			$("#from").dateRangePicker({
+				language: 'cn',
+				separator: ' 至 ',
+				endDate: yesterday
+			});
 
-      function getDate(element) {
-        var selectDate;
-        try {
-          selectDate = $.datepicker.parseDate(dateFormat, element.value);
-        } catch (error) {
-          selectDate = null;
-        }
+			function getDate(element) {
+				var selectDate;
+				try {
+					selectDate = $.datepicker.parseDate(dateFormat, element.value);
+				} catch (error) {
+					selectDate = null;
+				}
 
-        return selectDate;
-      }
-    });
+				return selectDate;
+			}
+		});
