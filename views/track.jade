@@ -17,23 +17,15 @@ block append content
 		var pathSimplifierIns;
 		var navg0;
 		var yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
-		var date;
+		var startDate, endDate;
 		map.on('complete', function () {
 			//doSearch();
 		});
 
 		function doSearch() {
 			var inputDate = $('#from').val();
-			if (inputDate != '') {
-				if (moment(inputDate).isAfter(yesterday, 'day')) {
-					alert('查询日期最晚为前一天！');
-					$('#from').focus();
-					return;
-				} else {
-					date = inputDate;
-				}
-			} else {
-				date = yesterday;
+			if (!inputDate || inputDate == '') {
+				endDate = yesterday;
 			}
 			
 			if (pathSimplifierIns) {
@@ -46,6 +38,11 @@ block append content
 
 			$.ajax({
 				url: '/showHistory/' + vehicle, 
+				data: {
+					vehicle: vehicle,
+					startDate: startDate,
+					endDate: endDate,
+				},
 				success: function (results) {
 					drawTrack(results.data);
 				},
@@ -139,21 +136,13 @@ block append content
 		}
 
 		$(function () {
-			var dateFormat = "yy-mm-dd";
 			$("#from").dateRangePicker({
+				autoClose: true,
 				language: 'cn',
 				separator: ' 至 ',
 				endDate: yesterday
+			}).bind('datepicker-change',function(event,obj) {
+				var startDate = moment(obj.date1).format('YYYY-MM-DD');
+				var endDate = moment(obj.date2).format('YYYY-MM-DD');
 			});
-
-			function getDate(element) {
-				var selectDate;
-				try {
-					selectDate = $.datepicker.parseDate(dateFormat, element.value);
-				} catch (error) {
-					selectDate = null;
-				}
-
-				return selectDate;
-			}
 		});
