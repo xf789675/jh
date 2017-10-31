@@ -69,8 +69,10 @@ router.get('/track/:vehicle', function(req, res, next) {
 	res.render('track', {title: vehicle});
 })
 
-router.get('/showHistory/:vehicle', function(req, res, next) {
-	var vehicle = req.params.vehicle;
+router.post('/showHistory', function(req, res, next) {
+	var vehicle = req.body.vehicle;
+	var startDate = req.body.startDate;
+	var endDate = req.body.endDate;
 	// console.log(queryTable);
 	pool.getConnection(function(err, connection) {
     connection.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history' + (queryTable + 1) + ' h ' +

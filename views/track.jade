@@ -37,12 +37,13 @@ block append content
 			var vehicle = hrefArray[hrefArray.length - 1];
 
 			$.ajax({
-				url: '/showHistory/' + vehicle, 
+				url: '/showHistory',
 				data: {
 					vehicle: vehicle,
 					startDate: startDate,
 					endDate: endDate,
 				},
+				type: 'post',
 				success: function (results) {
 					drawTrack(results.data);
 				},
