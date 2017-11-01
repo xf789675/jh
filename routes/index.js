@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var moment = require('moment');
 var mysql = require('mysql');
 var pool  = mysql.createPool({
   connectionLimit : 10,
@@ -72,11 +73,113 @@ router.get('/track/:vehicle', function(req, res, next) {
 router.post('/showHistory', function(req, res, next) {
 	var vehicle = req.body.vehicle;
 	var startDate = req.body.startDate;
-	var endDate = req.body.endDate;
+	var endDate = req.body.endDate
+  var cycleStart, cycle;
+  var resultJson = {};
 	// console.log(queryTable);
 	pool.getConnection(function(err, connection) {
-    connection.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo from history' + (queryTable + 1) + ' h ' +
-    	'where h.vehicle=? order by gpstime', [vehicle], function (error, results, fields) {
+    
+    var query = connection.query('SELECT mod(datediff(now(), s.start), s.cycle) as cycleno, s.cycle from newstatus s where s.vehicle=?', [vehicle]);
+    query
+      .on('error', function(error) {
+        throw error;
+      })
+      .on('result', function(row) {
+        connection.pause();
+        cycleStart = row.cycleno;
+        cycle = row.cycle;
+        connection.resume();
+      })
+      .on('end', function() {
+        connection.release();
+        if (startDate && startDate != '') {
+          var startRange = moment.duration(moment() - moment(startDate)).days();
+          cycleStart = startRange % cycle;
+          var searchRange = moment.duration(moment(endDate) - moment(startDate)).days();
+          var cycleLeft = cycle - cycleStart;
+          var repeatNum = 0;
+          var repeatLeft = 0;
+          if(searchRange > cycleLeft) {
+            repeatNum = (searchRange - (cycle - cycleStart)) / cycle + 1;
+            repeatLeft = (searchRange - (cycle - cycleStart)) % cycle;
+          };
+
+          pool.getConnection(function(err, conn1) {
+            var query1 = conn1.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo, h.cycleno from newhis h ' +
+              'where h.vehicle=? and h.cycleno<? order by h.cycleno, h.gpstime', [vehicle, cycleno]);
+          query1
+            .on('error', function(eror) {
+              throw error;
+            })
+            .on('result', function(row) {
+              conn1.pause();
+
+              var r_vehicle = row.vehicle;
+              var r_lat = row.lat;
+              var r_lng = row.lng;
+              var r_gpstime = row.gpstime;
+              var r_veo = row.veo;
+              var r_cycleno = row.cycleno;
+
+              var point = {
+                vehicle: row.vehicle,
+                lat: row.lat,
+                lng: row.lng,
+                gpstime: row.gpstime,
+                veo: row.veo,
+                cycleno: row.cycleno,
+              };
+
+              var before = resultJson['before'];
+              var cyclenoDatas = null;
+              if(before) {
+                cyclenoDatas = before[row.cycleno];
+              } else {
+                before = {};
+                resultJson['before'] = before;
+              }
+              if(!cyclenoDatas) {
+                cyclenoDatas = new Array();
+                before[row.cycleno] = cyclenoDatas;
+              }
+              cyclenoDatas.push(point);
+
+              conn1.resume();
+            })
+            .on('end', function() {
+              conn1.release();
+            })
+
+          pool.getConnection(function(err, conn) {
+            var query2 = conn.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo, h.cycleno from newhis h ' +
+              'where h.vehicle=? and h.cycleno=? order by h.cycleno, h.gpstime', [vehicle, cycleno]);
+
+          pool.getConnection(function(err, conn) {
+            var query3 = conn.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo, h.cycleno from newhis h ' +
+              'where h.vehicle=? and h.cycleno>? order by h.cycleno, h.gpstime', [vehicle, cycleno]);
+            , function (error, results, fields) {
+              conn.release();
+              if (error) throw error;
+              if(results.length > 0) {
+                // console.log(results);
+                var item = {};
+                item.lat = results[0].lat;
+                item.lng = results[0].lng;
+                item.veo = results[0].veo;
+                item.gpstime = results[0].gpstime;
+                item.vehicle = vehicle;
+                data.push(item);
+              }
+              connection.resume();
+
+            });
+
+        }
+      })
+    });
+    
+    connection.query('SELECT distinct h.vehicle, h.lat, h.lng, h.gpstime, h.veo, h.cycleno from newhis h' + 
+    	'where h.vehicle=? order by h.cycleno, h.gpstime', [vehicle], function (error, results, fields) {
       connection.release();
       if (error) throw error;
       queryTable = (queryTable + 1) % 2;
