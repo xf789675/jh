@@ -32,7 +32,7 @@ block append content
 				pathSimplifierIns.setData();
 				map.clearMap();
 			}
-			var href = window.location.href;
+			var href = decodeURI(window.location.href);
 			var hrefArray = href.split('/');
 			var vehicle = hrefArray[hrefArray.length - 1];
 
@@ -143,7 +143,7 @@ block append content
 				separator: ' 至 ',
 				endDate: yesterday
 			}).bind('datepicker-change',function(event,obj) {
-				var startDate = moment(obj.date1).format('YYYY-MM-DD');
-				var endDate = moment(obj.date2).format('YYYY-MM-DD');
+				startDate = moment(obj.date1).format('YYYY-MM-DD');
+				endDate = moment(obj.date2).format('YYYY-MM-DD');
 			});
 		});
