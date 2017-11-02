@@ -19,7 +19,7 @@ block append content
 		var yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
 		var startDate, endDate;
 		map.on('complete', function () {
-			//doSearch();
+			doSearch();
 		});
 
 		function doSearch() {
@@ -52,7 +52,15 @@ block append content
 		}
 
 		function drawTrack(data) {
-			
+			var formatData = [];
+			for (var i = 0; i < data.length; i++) {
+				for(var j = 0; j < data[i].data.length; j++) {
+					var point = data[i].data[j];
+					var date = data[i].date;
+					point['date'] = date;
+					formatData.push(point);
+				}
+			}
 			//加载PathSimplifier，loadUI的路径参数为模块名中 'ui/' 之后的部分
 			AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
 
@@ -68,8 +76,8 @@ block append content
 					getPath: function (pathData, pathIndex) {
 						//返回轨迹数据中的节点坐标信息，[AMap.LngLat, AMap.LngLat...] 或者 [[lng|number,lat|number],...]
 						var path = [];
-						for (var i = 0; i < data.length; i++) {
-							path.push(new AMap.LngLat(data[i].lng, data[i].lat));
+						for (var i = 0; i < pathData.path.length; i++) {					
+							path.push(new AMap.LngLat(pathData.path[i].lng, pathData.path[i].lat));
 						}
 						return path;
 					},
@@ -77,7 +85,7 @@ block append content
 						//返回鼠标悬停时显示的信息
 						if (pointIndex >= 0) {
 							//鼠标悬停在某个轨迹节点上
-							return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + date + ' ' + pathData.path[pointIndex].gpstime;
+							return pathData.path[pointIndex].vehicle + '，坐标:' + pathData.path[pointIndex].lng + ',' + pathData.path[pointIndex].lat + '，速度:' + pathData.path[pointIndex].veo + '，时间:' + pathData.path[pointIndex].date + ' ' + pathData.path[pointIndex].gpstime;
 						}
 						//鼠标悬停在节点之间的连线上
 						return pathData.path[0].vehicle;
@@ -91,7 +99,7 @@ block append content
 						}
 					}
 				});
-				doDraw(data);
+				doDraw(formatData);
 			});
 		}
 
@@ -103,7 +111,7 @@ block append content
 			//创建一个巡航器
 			AMapUI.load(['ui/misc/PathSimplifier'], function (PathSimplifier) {
 				navg0 = pathSimplifierIns.createPathNavigator(0, {	//关联第1条轨迹
-					speed: 10000,
+					speed: 20000,
 					pathNavigatorStyle: {
 						width: 16,
 						height: 32,
@@ -122,7 +130,7 @@ block append content
 					var cursor = navg0.getCursor();
 					var idx = cursor.idx;
 					var data = pathSimplifierIns.getPathData(0).path[idx];
-					marker.setContent('<div class=\'marker\'>时间：' + date + ' ' + data.gpstime + '<br />速度：' + data.veo + '<br />位置：' + data.lng + ',' + data.lat + '</div>');
+					marker.setContent('<div class=\'marker\'>时间：' + data.date + ' ' + data.gpstime + '<br />速度：' + data.veo + '<br />位置：' + data.lng + ',' + data.lat + '</div>');
 					marker.setPosition(navg0.getPosition());
 				})
 			});
@@ -141,6 +149,7 @@ block append content
 				autoClose: true,
 				language: 'cn',
 				separator: ' 至 ',
+				startDate: moment(new Date('!{start}')).format('YYYY-MM-DD'),
 				endDate: yesterday
 			}).bind('datepicker-change',function(event,obj) {
 				startDate = moment(obj.date1).format('YYYY-MM-DD');

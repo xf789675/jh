@@ -67,7 +67,23 @@ router.get('/listVehicle', function(req, res, next) {
 
 router.get('/track/:vehicle', function(req, res, next) {
 	var vehicle = req.params.vehicle;
-	res.render('track', {title: vehicle});
+  pool.getConnection(function(err, connection) {
+    if(err)
+      throw err;
+    connection.query('SELECT s.start from newstatus s where s.vehicle=?', [vehicle], function(error, results) {
+      connection.release();
+      if(error)
+        throw error;
+      var start;
+      if(results && results.length > 0) {
+        start = results[0].start;
+      }
+      res.render('track', {
+        title: vehicle,
+        start,
+      });
+    });
+  });
 })
 
 router.post('/showHistory', function(req, res, next) {
@@ -80,7 +96,7 @@ router.post('/showHistory', function(req, res, next) {
   console.log('++++++++++++' + vehicle + '++++++++++++++');
 	pool.getConnection(function(err, connection) {
     
-    var query = connection.query('SELECT mod(datediff(now(), s.start), s.cycle) as cycleno, s.cycle, s.start from newstatus s where s.vehicle=?', [vehicle]);
+    var query = connection.query('SELECT mod(datediff(now(), s.start) - 1, s.cycle) as cycleno, s.cycle, s.start from newstatus s where s.vehicle=?', [vehicle]);
     query
       .on('error', function(error) {
         throw error;
@@ -100,10 +116,10 @@ router.post('/showHistory', function(req, res, next) {
         var repeatLeft = 0;
         var isOverloop = false;
         if (startDate && startDate != '') {
-          var startRange = moment.duration(moment(startDate) - moment(start)).days();
+          var startRange = moment.duration(moment(startDate) - moment(start)).asDays();
           cycleStart = startRange % cycle;
           console.log(cycleStart);
-          var searchRange = moment.duration(moment(endDate) - moment(startDate)).days();
+          var searchRange = moment.duration(moment(endDate) - moment(startDate)).asDays();
           cycleLeft = cycle - cycleStart - 1;
           console.log('searchRange: ' + searchRange);
           console.log('cycleLeft: ' + cycleLeft);
@@ -111,7 +127,7 @@ router.post('/showHistory', function(req, res, next) {
             isOverloop = true;
             repeatNum = parseInt((searchRange + 1 - (cycle - cycleStart)) / cycle);
             // repeatLeft = (searchRange - (cycle - cycleStart)) % cycle;
-            repeatLeft = (moment.duration(moment(endDate) - moment(start)).days() + 1) % cycle;
+            repeatLeft = (moment.duration(moment(endDate) - moment(start)).asDays() + 1) % cycle;
           }
           console.log('repeatNum: ' + repeatNum);
           console.log('repeatLeft: ' + repeatLeft);
@@ -322,35 +338,40 @@ router.post('/showHistory', function(req, res, next) {
                             }
 
                             if(before) {
-                              for(var i=0; i < repeatLeft; i++) {
+                              for(var i=0; repeatLeft > 0; i++) {
                                 if(before[i]) {
                                   var date = moment(startDate).add(j++, 'days').format('YYYY-MM-DD');
                                   points.push({
                                     date: date,
                                     data: before[i],
                                   });
+                                  repeatLeft--;
+                                } else {
+                                  break;
                                 }
                               }
                             }
 
-                            if(repeatLeft > cycleStart) {
+                            if(repeatLeft > 0) {
                               points.push({
                                 date: moment(startDate).add(j++, 'days').format('YYYY-MM-DD'),
                                 data: current[cycleStart],
                               });
+                              repeatLeft--;
                             }
 
-                            if(repeatLeft > cycleStart + 1) {
-                              for (var i = cycleStart + 1; i < repeatLeft - 1; i++) {
-                                if(after[i]) {
-                                  var date = moment(startDate).add(j++, 'days');
-                                  points.push({
-                                    date: moment(date).format('YYYY-MM-DD'),
-                                    data: after[i],
-                                  });
-                                }
+                            
+                            for (var i = 0; repeatLeft > 0; i++) {
+                              if(after[cycleStart + i + 1]) {
+                                var date = moment(startDate).add(j++, 'days');
+                                points.push({
+                                  date: moment(date).format('YYYY-MM-DD'),
+                                  data: after[cycleStart + i + 1],
+                                });
+                                repeatLeft--;
                               }
                             }
+                            
 
 
                           }
